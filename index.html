@@ -1,0 +1,76 @@
+<html>
+
+ <head>
+  <title></title>
+  <script src="customSetting.js"></script>
+  <script src="src/jquery-3.2.1.min.js"></script>
+  <script>
+    $.noConflict();
+    var jqry = jQuery;
+    jqry(document).ready(function(){
+      // menu function
+      var menu_function = function (){
+         function _addImg_(_filename_){
+           var _filestring_ = String(_filename_);
+           var _fname_= _filestring_.split('/');
+           var _id_ = _fname_[1].split('.');
+           var _regImg_ = jqry('<img>');
+           _regImg_.attr('src',_filename_);
+           _regImg_.attr('id',_id_[0]);
+           _regImg_.attr('width','100');
+           _regImg_.attr('height','70');
+           return _regImg_
+         };
+         function _addLine_forImg_(_menu_table_, img_filenames){
+           var _line_ = jqry('<tr>');
+           jqry.each(img_filenames, function(index, element){
+             var _element_ = jqry('<td>');
+             _element_.append(_addImg_(element));
+             _line_.append(_element_); 
+           });
+           _menu_table_.append(_line_);
+         };
+         function _addLine_forText_(_menu_table_, text_strings){
+           var _line_ = jqry('<tr>');
+           jqry.each(text_strings, function(index, element){
+             var _element_ = jqry('<th>');
+             _element_.html(element);
+             _element_.css('color','grey').css('font-size','10');
+             _line_.append(_element_);
+           });
+           _menu_table_.append(_line_);
+         };
+
+         var _menu_div_ = jqry('<div>');
+         _menu_div_.attr('id','_menu_div_');
+         var _menu_table_ = jqry('<table>'); 
+         _menu_table_.attr('id','_menu_table_');
+         // add line
+         img_filenames = new Array('img/register_image.png', 'img/book_image.jpeg', 'img/list_image.jpeg', 'img/search_image.png');
+         _addLine_forImg_(_menu_table_, img_filenames);
+         text_strings = new Array('devices register<br>for admin', 'routing update<br>for admin', 'policies<br>for admin', 'search<br>for users');
+         _addLine_forText_(_menu_table_, text_strings);
+         jqry(_menu_div_).append(_menu_table_);
+         jqry(document.body).append(_menu_div_);
+      };
+      menu_function();
+    });
+
+    jqry(document).ready(function(){
+      jqry('#register_image').on('click',function(event){
+         console.log(123);
+         event.preventDefault()
+         event.stopPropagation()
+         return false
+      });
+    });
+
+
+
+  </script>
+ </head>
+
+ <body>
+ </body>
+
+</html>
