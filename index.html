@@ -7,8 +7,45 @@
   <script>
     $.noConflict();
     var jqry = jQuery;
+
+    jqry(document).ajaxSuccess(function(){
+         jqry('#_processing_div_').remove();
+    }).ajaxSend(function(){
+         jqry('#_processing_div_').remove();
+         var _prcessing_img_ = jqry('<table>').css('margin','auto').append(jqry('<tr>').append('<td>').append(jqry('<img></img>').attr('src','img/processing.gif').attr('width','80')));
+         var _processing_ = jqry('<div>').attr('id','_processing_div_').append(_prcessing_img_);
+         jqry(document.body).append(_processing_);           
+    });
+    
+    var remove_divAll = function(){
+      jqry('#_devices_reg_div_').remove();
+      jqry('#_adminauth_div_').remove();
+      jqry('#_processing_div_').remove();
+      jqry('#_regDeviceList_').remove();
+      jqry('#_ajax_return_result_div_').remove();
+    };
+
+    function _addLine_forText_(_menu_table_, text_strings){
+      var _line_ = jqry('<tr>');
+      jqry.each(text_strings, function(index, element){
+        var _element_ = jqry('<th>');
+        _element_.html(element);
+        _element_.css('color','grey').css('font-size','10');
+        _line_.append(_element_);
+      });
+      _menu_table_.append(_line_);
+    };
+
+    function _addLine_forObject_(_table_, object_array){
+      var _line_ = jqry('<tr>');
+      jqry.each(object_array, function(index, element){
+         _line_.append(jqry('<td>').append(element));
+      });
+      _table_.append(_line_);
+    };
+
+    ////////////////////////////////// menu function ///////////////////////////////////////
     jqry(document).ready(function(){
-      // menu function
       var menu_function = function (){
          function _addImg_(_filename_){
            var _filestring_ = String(_filename_);
@@ -30,20 +67,11 @@
            });
            _menu_table_.append(_line_);
          };
-         function _addLine_forText_(_menu_table_, text_strings){
-           var _line_ = jqry('<tr>');
-           jqry.each(text_strings, function(index, element){
-             var _element_ = jqry('<th>');
-             _element_.html(element);
-             _element_.css('color','grey').css('font-size','10');
-             _line_.append(_element_);
-           });
-           _menu_table_.append(_line_);
-         };
 
+         remove_divAll();
          var _menu_div_ = jqry('<div>');
          _menu_div_.attr('id','_menu_div_');
-         var _menu_table_ = jqry('<table>'); 
+         var _menu_table_ = jqry('<table>').css('margin','auto'); 
          _menu_table_.attr('id','_menu_table_');
          // add line
          img_filenames = new Array('img/register_image.png', 'img/book_image.jpeg', 'img/list_image.jpeg', 'img/search_image.png');
@@ -53,17 +81,180 @@
          jqry(_menu_div_).append(_menu_table_);
          jqry(document.body).append(_menu_div_);
       };
+      jqry('#_auth_password_').remove(); 
       menu_function();
     });
 
+    ////////////////////////////////// register button click ///////////////////////////////////////
     jqry(document).ready(function(){
       jqry('#register_image').on('click',function(event){
-         console.log(123);
+         remove_divAll();
+
+         var _addSelect_ = function (_array_, _select_id_){
+            var _select_ = jqry('<select>').attr('id',_select_id_);
+            if (_array_.length != 0){
+              jqry.each(_array_, function(index, element){
+                 _select_.append(jqry('<option>').attr('value',element).html(element));
+              });
+            }
+            _select_.append(jqry('<option>').attr('value','none').html('none'));
+            return _select_
+         };
+
+         function _register_inputForm_(){
+           var _devices_reg_div_ = jqry('<div>').attr('id','_devices_reg_div_');
+           jqry(document.body).append(_devices_reg_div_);
+           jqry('#_devices_reg_div_').on('click', '#_regButton_', function(event){
+                var ip_pattern = new RegExp("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$");
+                var _regIp_ = jqry('#_ipAddr_regi_').val();
+                if (! ip_pattern.test(_regIp_)){
+                  jqry('#_ajax_return_result_div_').remove();
+                  var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
+                  _ajax_return_result_div_.append(jqry('<h5>').html('without subnet, IP only').css('color','red'));             
+                  jqry(document.body).append(_ajax_return_result_div_);
+                }else{
+                  jqry.ajax({
+                     type:"POST",
+                     url:ajax_api_server.concat('juniper/devicelist/register/'),
+                     data:JSON.stringify({
+                        items:[{
+                           apiaccessip:jqry('#_ipAddr_regi_').val(),
+                           location:jqry('#_idc_location_ > option:selected')[0].value
+                        }],
+                        auth_key:jqry('#_auth_password_').val()
+                     }),
+                     success:function(data){
+                        var _getFrom_ajax_ = JSON.parse(data);
+                        jqry('#_ajax_return_result_div_').remove();
+                        var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
+                        jqry.each(_getFrom_ajax_, function(index, element){
+                            _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
+                        });
+                        jqry(document.body).append(_ajax_return_result_div_);
+                     } 
+                  });
+                }
+                event.preventDefault()
+                event.stopPropagation()
+                return false
+           });
+           var _devices_reg_table_ = jqry('<table>').css('margin','auto').attr('id','_devices_reg_table_');
+           text_strings = new Array('IP address<br>to register', 'Location', '', '');
+           _addLine_forText_(_devices_reg_table_, text_strings);
+           var _regIp_ = jqry('<input>').attr('type','text').attr('id','_ipAddr_regi_');
+           var _idcLocation_ = new Array('ilsan', 'boramae', 'commerce');
+           var _regIdc_ = _addSelect_(_idcLocation_, '_idc_location_');
+           var _regButton_ = jqry('<button>').attr('id','_regButton_').html('Register');
+           var _parButton_ = jqry('<button>').attr('id','_parButton_').html('Paring'); 
+           var _line_element_ = new Array(_regIp_, _regIdc_, _regButton_, _parButton_);
+           _addLine_forObject_(_devices_reg_table_, _line_element_);
+           _devices_reg_div_.append(_devices_reg_table_);
+           /////////////  view information - register information
+           var _regInfoList_ = jqry('<div>').attr('id','_regInfoList_');
+           jqry(document.body).append(_regInfoList_);
+           jqry('#_regInfoList_').on('click', 'button', function(event){
+                var _splited_ = jqry(this).val().split('@');
+                jqry.ajax({
+                   type:"DELETE",
+                   url:ajax_api_server.concat('juniper/devicelist/register/'),
+                   data:JSON.stringify({
+                       items:[{
+                          apiaccessip:_splited_[0],
+                          hostname:_splited_[1],
+                          location:_splited_[2],
+                          model:_splited_[3],
+                          version:_splited_[4]
+                       }],
+                       auth_key:jqry('#_auth_password_').val()
+                   }),
+                   success:function(data){
+                       var _getFrom_ajax_ = JSON.parse(data);
+                       jqry('#_ajax_return_result_div_').remove();
+                       var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
+                           jqry.each(_getFrom_ajax_, function(index, element){
+                               _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
+                           });
+                       jqry(document.body).append(_ajax_return_result_div_);
+                   }
+                });
+                event.preventDefault()
+                event.stopPropagation()
+                return false
+           });
+           jqry.ajax({
+              type:"GET",
+              url:ajax_api_server.concat('juniper/devicelist/register/'),
+              success:function(data){
+                var _getFrom_ajax_ = JSON.parse(data);
+                var _getFromArray_ = _getFrom_ajax_.items;
+                if (_getFromArray_.length){
+                  var _regDeviceList_ = jqry('<table>').css('margin','auto').attr('id','_regDeviceList_');
+                  jqry.each(_getFromArray_, function(index, element){
+                     var _line_ = jqry('<tr>');
+                     _line_.append(jqry('<th>').html(element.apiaccessip).css('color','black').css('font-size','12'));
+                     _line_.append(jqry('<th>').html(element.hostname).css('color','red').css('font-size','12'));
+                     _line_.append(jqry('<th>').html(element.location).css('color','black').css('font-size','12'));
+                     _line_.append(jqry('<th>').html(element.model).css('color','grey').css('font-size','12'));
+                     _line_.append(jqry('<th>').html(element.version).css('color','grey').css('font-size','12'));
+                     _line_.append(jqry('<th>').append(jqry('<button>').attr('value',text_strings.join('@')).html('Remove').css('color','red').css('font-size','8')));
+                     _regDeviceList_.append(_line_);
+                  });
+                  _regInfoList_.append(_regDeviceList_);
+                }
+              }
+           });
+         };
+
+         var _hidden_auth_password_ = jqry(document.body).find('#_auth_password_')[0];
+         if (_hidden_auth_password_){
+           var _hiddenAuthpassword_ = jqry('#_auth_password_').val();
+           _register_inputForm_();
+         }else{
+           var _adminauth_div_ = jqry('<div>').attr('id','_adminauth_div_');
+           jqry(document.body).append(_adminauth_div_);
+           var _adminauth_table_ = jqry('<table>').css('margin','auto');
+           text_strings = new Array('admin password', '');
+           _addLine_forText_(_adminauth_table_, text_strings);
+           var _adminauth_input_ = jqry('<input>').attr('type','password').attr('id','_adminauth_input_');
+           var _adminauth_button_ = jqry('<button>').attr('id','_adminauth_button_').html('admin login');
+           var _line_element_ = new Array(_adminauth_input_, _adminauth_button_);
+           _addLine_forObject_(_adminauth_table_, _line_element_);
+           _adminauth_div_.append(_adminauth_table_);
+           jqry('#_adminauth_button_').on('click',function(event){
+               jqry('#_auth_password_').remove();
+               jqry.ajax({
+                    type:"POST",
+                    url:ajax_api_server.concat('juniper/confirmauth/'),
+                    data:JSON.stringify({
+                       auth_password:jqry('#_adminauth_input_').val(),
+                    }),
+                    success:function(data){
+                       var _getFrom_ajax_= JSON.parse(data);
+                       if (_getFrom_ajax_.process_status.match('error')){
+                         jqry('#_ajax_return_result_div_').remove();
+                         var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
+                         _ajax_return_result_div_.append(jqry('<h5>').html(_getFrom_ajax_.process_msg).css('color','red'));             
+                         jqry(document.body).append(_ajax_return_result_div_);
+                       }else{
+                         var _getAuthpassword_ = jqry('<input>').attr('id','_auth_password_').attr('type','hidden').attr('value',_getFrom_ajax_.items[0].auth_password.trim());
+                         jqry(document.body).append(_getAuthpassword_);
+                         remove_divAll();
+                         _register_inputForm_();
+                       } 
+                    }
+               });
+               event.preventDefault()
+               event.stopPropagation()
+               return false 
+           });
+         }
+
          event.preventDefault()
          event.stopPropagation()
          return false
       });
     });
+    
 
 
 
