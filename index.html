@@ -45,6 +45,15 @@
       _table_.append(_line_);
     };
 
+    var _ajaxSuccess_multiLine_printing_ = function(_dataFromajax_, _divIdName_){
+       var _getFrom_ajax_ = JSON.parse(_dataFromajax_);
+       var _ajax_return_result_div_ = jqry('<div>').attr('id',_divIdName_).attr('align','center');
+       jqry.each(_getFrom_ajax_, function(index, element){
+           _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));
+       });
+       jqry(document.body).append(_ajax_return_result_div_);
+    }
+
     function _login_auth_start_(_afterLogin_){
       var _hidden_auth_password_ = jqry(document.body).find('#_auth_password_')[0];
       if (_hidden_auth_password_){
@@ -72,6 +81,7 @@
                  }),
                  success:function(data){
                     var _getFrom_ajax_= JSON.parse(data);
+                    //
                     if (_getFrom_ajax_.process_status.match('error')){
                       var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
                       _ajax_return_result_div_.append(jqry('<h5>').html(_getFrom_ajax_.process_msg).css('color','red'));             
@@ -82,6 +92,7 @@
                       remove_divAll();
                       _afterLogin_();
                     } 
+                    //
                  }
             });
             event.preventDefault()
@@ -102,15 +113,6 @@
        return _select_
     };
      
-    var _ajaxSuccess_multiLine_printing_ = function(_dataFromajax_, _divIdName_){
-       var _getFrom_ajax_ = JSON.parse(_dataFromajax_);
-       var _ajax_return_result_div_ = jqry('<div>').attr('id',_divIdName_).attr('align','center');
-       jqry.each(_getFrom_ajax_, function(index, element){
-           _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));
-       });
-       jqry(document.body).append(_ajax_return_result_div_);
-    }
-    //
     ////////////////////////////////// menu function ///////////////////////////////////////
     jqry(document).ready(function(){
       var menu_function = function (){
@@ -182,12 +184,13 @@
                        auth_key:jqry('#_auth_password_').val()
                    }),
                    success:function(data){
-                       var _getFrom_ajax_ = JSON.parse(data);
-                       var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
-                           jqry.each(_getFrom_ajax_, function(index, element){
-                               _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
-                           });
-                       jqry(document.body).append(_ajax_return_result_div_);
+                       _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                       //var _getFrom_ajax_ = JSON.parse(data);
+                       //var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
+                       //    jqry.each(_getFrom_ajax_, function(index, element){
+                       //        _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
+                       //    });
+                       //jqry(document.body).append(_ajax_return_result_div_);
                        _regDeviceList_ajax_(_regInfoList_);
                    }
                 });
@@ -243,12 +246,13 @@
                         auth_key:jqry('#_auth_password_').val()
                      }),
                      success:function(data){
-                        var _getFrom_ajax_ = JSON.parse(data);
-                        var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
-                        jqry.each(_getFrom_ajax_, function(index, element){
-                            _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
-                        });
-                        jqry(document.body).append(_ajax_return_result_div_);
+                        _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                        //var _getFrom_ajax_ = JSON.parse(data);
+                        //var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
+                        //jqry.each(_getFrom_ajax_, function(index, element){
+                        //    _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
+                        //});
+                        //jqry(document.body).append(_ajax_return_result_div_);
                         _regDeviceList_ajax_(_regInfoList_);
                      } 
                   });
@@ -403,14 +407,12 @@
            //
            _createSelectOption_forClustering_(_select_clusterGroup_)
            _clusterStatusInfo_(_select_clusterGroup_);
-
          };
          _login_auth_start_(_clusterInfoList_);
          event.preventDefault()
          event.stopPropagation()
          return false
       });
-      
     });
     
 
