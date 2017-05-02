@@ -24,6 +24,9 @@
       jqry('#_regDeviceList_').remove();
       jqry('#_ajax_return_result_div_').remove();
       jqry('#_select_clusterGroup_').remove();
+      jqry('#_devicesInfoUpdate_subMenu_div_').remove();
+      jqry('#_deviceUpdated_infoView_div_').remove();
+      jqry('#_deviceUpdated_infoView_table_').remove();
     };
 
     function _addLine_forText_(_menu_table_, text_strings){
@@ -49,7 +52,7 @@
        var _getFrom_ajax_ = JSON.parse(_dataFromajax_);
        var _ajax_return_result_div_ = jqry('<div>').attr('id',_divIdName_).attr('align','center');
        jqry.each(_getFrom_ajax_, function(index, element){
-           _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));
+           _ajax_return_result_div_.append(jqry('<div>').html(element.process_msg).css('font-size','11').css('color','red'));
        });
        jqry(document.body).append(_ajax_return_result_div_);
     }
@@ -112,30 +115,34 @@
        _select_.append(jqry('<option>').attr('value','none').html('none'));
        return _select_
     };
+
+    //
+    function _addImg_(_filename_){
+       var _filestring_ = String(_filename_);
+       var _fname_= _filestring_.split('/');
+       var _id_ = _fname_[1].split('.');
+       var _regImg_ = jqry('<img>');
+       _regImg_.attr('src',_filename_);
+       _regImg_.attr('id',_id_[0]);
+       _regImg_.attr('width','70');
+       _regImg_.attr('height','70');
+       return _regImg_
+    };
+
+    function _addLine_forImg_(_menu_table_, img_filenames){
+      var _line_ = jqry('<tr>');
+      jqry.each(img_filenames, function(index, element){
+        var _element_ = jqry('<td>');
+        _element_.append(_addImg_(element));
+        _line_.append(_element_); 
+      });
+      _menu_table_.append(_line_);
+    }
+    //
      
     ////////////////////////////////// menu function ///////////////////////////////////////
     jqry(document).ready(function(){
       var menu_function = function (){
-         function _addImg_(_filename_){
-           var _filestring_ = String(_filename_);
-           var _fname_= _filestring_.split('/');
-           var _id_ = _fname_[1].split('.');
-           var _regImg_ = jqry('<img>');
-           _regImg_.attr('src',_filename_);
-           _regImg_.attr('id',_id_[0]);
-           _regImg_.attr('width','70');
-           _regImg_.attr('height','70');
-           return _regImg_
-         };
-         function _addLine_forImg_(_menu_table_, img_filenames){
-           var _line_ = jqry('<tr>');
-           jqry.each(img_filenames, function(index, element){
-             var _element_ = jqry('<td>');
-             _element_.append(_addImg_(element));
-             _line_.append(_element_); 
-           });
-           _menu_table_.append(_line_);
-         };
 
          remove_divAll();
          var _menu_div_ = jqry('<div>');
@@ -143,9 +150,9 @@
          var _menu_table_ = jqry('<table>').css('margin','auto'); 
          _menu_table_.attr('id','_menu_table_');
          // add line
-         img_filenames = new Array('img/register_image.png', 'img/group_image.png', 'img/update_image.jpeg', 'img/book_image.jpeg', 'img/list_image.jpeg', 'img/search_image.png');
+         img_filenames = new Array('img/register_image.png', 'img/group_image.png', 'img/firewallUpdate.png', 'img/book_image.jpeg', 'img/list_image.jpeg', 'img/search_image.png');
          _addLine_forImg_(_menu_table_, img_filenames);
-         text_strings = new Array('devices register<br>for admin', 'grouping<br>devices', 'update information<br>devices', 'routing update<br>for admin', 'policies<br>for admin', 'search<br>for users');
+         text_strings = new Array('devices register<br>for admin', 'grouping<br>devices', 'registered devices<br>update', 'routing update<br>for admin', 'policies<br>for admin', 'search<br>for users');
          _addLine_forText_(_menu_table_, text_strings);
          jqry(_menu_div_).append(_menu_table_);
          jqry(document.body).append(_menu_div_);
@@ -185,12 +192,6 @@
                    }),
                    success:function(data){
                        _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
-                       //var _getFrom_ajax_ = JSON.parse(data);
-                       //var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
-                       //    jqry.each(_getFrom_ajax_, function(index, element){
-                       //        _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
-                       //    });
-                       //jqry(document.body).append(_ajax_return_result_div_);
                        _regDeviceList_ajax_(_regInfoList_);
                    }
                 });
@@ -247,12 +248,6 @@
                      }),
                      success:function(data){
                         _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
-                        //var _getFrom_ajax_ = JSON.parse(data);
-                        //var _ajax_return_result_div_ = jqry('<div>').attr('id','_ajax_return_result_div_').attr('align','center');
-                        //jqry.each(_getFrom_ajax_, function(index, element){
-                        //    _ajax_return_result_div_.append(jqry('<h5>').html(element.process_msg).css('color','red'));        
-                        //});
-                        //jqry(document.body).append(_ajax_return_result_div_);
                         _regDeviceList_ajax_(_regInfoList_);
                      } 
                   });
@@ -413,6 +408,134 @@
          event.stopPropagation()
          return false
       });
+      ////////////////////////////////// register button click ///////////////////////////////////////
+      jqry('#firewallUpdate').on('click',function(event){
+
+         function _deviceUpdated_infoView_(_deviceUpdated_infoView_div_){
+              jqry('#_deviceUpdated_infoView_select_').remove();
+              jqry.ajax({
+                 type:"GET",
+                 url:ajax_api_server.concat('juniper/devicelist/'),
+                 success:function(data){
+                     var _getFrom_ajax_ = JSON.parse(data);
+                     var _getFrom_ajax_array_ = _getFrom_ajax_.items;
+                     var _hostnameList_ = new Array();
+                     var _deviceUpdated_infoView_select_= jqry('<select>').css('margin','auto').attr('id','_deviceUpdated_infoView_select_');
+                     jqry.each(_getFrom_ajax_array_, function(index, element){
+                        if (_hostnameList_.indexOf(element.hostname) == -1){
+                          _deviceUpdated_infoView_select_.append(jqry('<option>').attr('value',element.hostname).html(element.hostname));
+                          _hostnameList_.push(element.hostname);
+                        }
+                     _deviceUpdated_infoView_div_.append(_deviceUpdated_infoView_select_);
+                     });
+                 }
+              });              
+         };
+
+         function _devicesInfoUpdate_(){
+              var _devicesInfoUpdate_subMenu_div_ = jqry('<div>').attr('id','_devicesInfoUpdate_subMenu_div_').attr('align','center');
+              jqry(document.body).append(_devicesInfoUpdate_subMenu_div_);
+              var _devicesInfoUpdate_subMenu_table_ = jqry('<table>').css('margin','auto').attr('id','_devicesInfoUpdate_subMenu_table_');
+              //
+              var _deviceUpdated_infoView_div_ = jqry('<div>').attr('id','_deviceUpdated_infoView_div_').attr('align','center');
+              jqry(document.body).append(_deviceUpdated_infoView_div_);
+              //
+              function _callAjax_zoneList_(_thisObj_value_){
+                 jqry('#_ajax_return_result_div_').remove();
+                 jqry('#_deviceUpdated_infoView_table_').remove();
+                 jqry.ajax({
+                    type:"GET",
+                    url:ajax_api_server.concat('juniper/devicelist/'),
+                    success:function(data){
+                         var _getFrom_ajax_ = JSON.parse(data);
+                         var _getFrom_ajax_array_ = _getFrom_ajax_.items;
+                         var _deviceUpdated_infoView_table_ = jqry('<table>').css('margin','auto').attr('id','_deviceUpdated_infoView_table_');
+                         _deviceUpdated_infoView_div_.append(_deviceUpdated_infoView_table_);
+                         jqry.each(_getFrom_ajax_array_, function(index, element){
+                            if (_thisObj_value_.match(element.hostname)){
+                              _tableTrObj_ = jqry('<tr>');
+                              _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.hostname).css('color','grey'));
+                              _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.from_zone).css('color','green'));
+                              _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.to_zone).css('color','green')); 
+                              var _button_value_string_ = String(element.hostname) + String('#') + String(element.from_zone) + String('#') + String(element.to_zone);
+                              if (element.zoneValidation.match('^enable$')){
+                                _button_value_string_ = _button_value_string_.concat('#enable#disable');
+                                _tableTrObj_.append(jqry('<th>').append(jqry('<button>').attr('value',_button_value_string_).html('enable').css('color','blue').css('font-size','8')));
+                              }else{
+                                _button_value_string_ = _button_value_string_.concat('#disable#enable');
+                                _tableTrObj_.append(jqry('<th>').append(jqry('<button>').attr('value',_button_value_string_).html('disable').css('color','red').css('font-size','8')));
+                              };
+                              _deviceUpdated_infoView_table_.append(_tableTrObj_);
+                            };
+                         });
+                    }   
+                 });
+              };
+              //
+              jqry('#_deviceUpdated_infoView_div_').on('change','#_deviceUpdated_infoView_select_',function(event){
+                 var _thisObj_value_ = jqry(this).val();
+                 _callAjax_zoneList_(_thisObj_value_);
+                 event.preventDefault()
+                 event.stopPropagation()
+                 return false
+              });
+              //
+              jqry('#_deviceUpdated_infoView_div_').on('click', 'button', function(event){
+                 var _thisSelected_value_ = jqry('#_deviceUpdated_infoView_select_ > option:selected')[0].value;
+                 console.log(_thisSelected_value_);
+                 var _thisObj_value_ = jqry(this).val();
+                 var _thisObj_array_ = _thisObj_value_.split('#');
+                 jqry.ajax({
+                    type:"PUT",
+                    data:JSON.stringify({ 
+                      items:[{
+                          hostname:_thisObj_array_[0],
+                          from_zone:_thisObj_array_[1],
+                          to_zone:_thisObj_array_[2],
+                          zoneValidation:_thisObj_array_[3],
+                          zoneValidationChange:_thisObj_array_[4]
+                      }],
+                      auth_key:jqry('#_auth_password_').val()
+                    }),
+                    url:ajax_api_server.concat('juniper/devicelist/'),
+                    success:function(data){
+                        _callAjax_zoneList_(_thisSelected_value_);                   
+                    }
+                 });
+                 event.preventDefault()
+                 event.stopPropagation()
+                 return false
+              });
+
+              jqry('#_devicesInfoUpdate_subMenu_div_').on('click', '#_devicesInfoUpdate_subMenu_button_', function(event){
+                 jqry('#_ajax_return_result_div_').remove();
+                 jqry('#_deviceUpdated_infoView_table_').remove();
+                 jqry.ajax({
+                    type:"POST",
+                    url:ajax_api_server.concat('juniper/devicelist/'),
+                    data:JSON.stringify({
+                        auth_key:jqry('#_auth_password_').val()
+                    }),
+                    success:function(data){
+                        _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                        _deviceUpdated_infoView_(_deviceUpdated_infoView_div_);
+                    }
+                 });     
+                 event.preventDefault()
+                 event.stopPropagation()
+                 return false
+              });
+              var _devicesInfoUpdate_subMenu_button_ = jqry('<button>').attr('id','_devicesInfoUpdate_subMenu_button_').html('registered devices information updates').css('color','green').css('font-size','12');
+              _devicesInfoUpdate_subMenu_div_.append(_devicesInfoUpdate_subMenu_button_);
+              _deviceUpdated_infoView_(_deviceUpdated_infoView_div_);
+         }; 
+         remove_divAll();
+         _login_auth_start_(_devicesInfoUpdate_);
+         event.preventDefault()
+         event.stopPropagation()
+         return false
+      });
+
     });
     
 
