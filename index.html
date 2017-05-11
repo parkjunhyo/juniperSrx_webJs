@@ -34,6 +34,8 @@
       jqry('#_cachingPolicyButton_div_').remove();
       jqry('#_listingPolicySelect_div_').remove();
       jqry('#_policyTable_div_').remove();
+      jqry('#_userSearchMenu_div_').remove();
+      jqry('#_searchInputValidation_div_').remove();
     };
 
     function _addLine_forText_(_menu_table_, text_strings){
@@ -833,10 +835,6 @@
                             );
                             _addLine_forText_(_policyTable_, text_strings); 
                         });
-
-
-
-
                       }
                   }
                }); 
@@ -848,6 +846,174 @@
             // 
          };
          _login_auth_start_(policyExportingCaching_menu);
+         event.preventDefault()
+         event.stopPropagation()
+         return false
+      });
+      
+      ////////////////////////////////// register button click ///////////////////////////////////////
+      jqry('#search_image').on('click',function(event){
+         remove_divAll();
+         function userSearchMenu(){
+            var _userSearchMenu_div_ = jqry('<div>').attr('id','_userSearchMenu_div_').attr('align','center');
+            jqry(document.body).append(_userSearchMenu_div_); 
+            //
+            var _usrSearchTable_ = jqry('<table>').css('margin','auto').attr('id','_usrSearchTable_');
+            _userSearchMenu_div_.append(_usrSearchTable_);
+            //
+            var text_strings = new Array('source<br>address', 'option', 'destination<br>address', 'option', 'protocol', 'application<br>number', 'action', '');
+            _addLine_forText_(_usrSearchTable_, text_strings);
+            //
+            var _trObject_ = jqry('<tr>');
+            _usrSearchTable_.append(_trObject_);
+            _trObject_.append(jqry('<th>').append(jqry('<input>').attr('type','text').attr('id','srcIp')));
+            //
+            var srcIpSelectOjbect = jqry('<select>').attr('id','srcIpSelectOjbect');
+            srcIpSelectOjbect.append(jqry('<option>').attr('value','userdefine').html('user define'));
+            srcIpSelectOjbect.append(jqry('<option>').attr('value','all').html('all address'));
+            srcIpSelectOjbect.append(jqry('<option>').attr('value','0.0.0.0/0').html('any address'));
+            _trObject_.append(jqry('<th>').append(srcIpSelectOjbect));
+            //
+            _trObject_.append(jqry('<th>').append(jqry('<input>').attr('type','text').attr('id','dstIp')));
+            //
+            var dstIpSelectOjbect = jqry('<select>').attr('id','dstIpSelectOjbect');
+            dstIpSelectOjbect.append(jqry('<option>').attr('value','userdefine').html('user define'));
+            dstIpSelectOjbect.append(jqry('<option>').attr('value','all').html('all address'));
+            dstIpSelectOjbect.append(jqry('<option>').attr('value','0.0.0.0/0').html('any address'));
+            _trObject_.append(jqry('<th>').append(dstIpSelectOjbect));
+            //
+            var protocolSelectObject = jqry('<select>').attr('id','protocolSelectObject');
+            protocolSelectObject.append(jqry('<option>').attr('value','select').html('select'));
+            protocolSelectObject.append(jqry('<option>').attr('value','all').html('all'));
+            protocolSelectObject.append(jqry('<option>').attr('value','tcp').html('tcp'));
+            protocolSelectObject.append(jqry('<option>').attr('value','udp').html('udp'));
+            protocolSelectObject.append(jqry('<option>').attr('value','icmp').html('icmp'));
+            _trObject_.append(jqry('<th>').append(protocolSelectObject));
+            //
+            _trObject_.append(jqry('<th>').append(jqry('<input>').attr('type','text').attr('id','dstPort')));
+            //
+            var actionSelectObject = jqry('<select>').attr('id','actionSelectObject');
+            actionSelectObject.append(jqry('<option>').attr('value','permit').html('permit'));
+            actionSelectObject.append(jqry('<option>').attr('value','deny').html('deny'));
+            _trObject_.append(jqry('<th>').append(actionSelectObject));
+            //
+            var searchButton = jqry('<button>').attr('id','searchButton').html('search');
+            _trObject_.append(jqry('<th>').append(searchButton));
+            //
+            jqry('#protocolSelectObject').on('change', function(event){
+               var _thisProtocol_ = jqry(this).val();
+               if(_thisProtocol_.match('all') || _thisProtocol_.match('icmp')){
+                 jqry('#dstPort').attr('disabled','disabled').val('disabled').css('color','grey');
+               }else{
+                 jqry('#dstPort').removeAttr('disabled').val('80, number only').css('color','grey');
+               }
+               event.preventDefault()
+               event.stopPropagation()
+               return false
+            });
+            //
+            jqry('#srcIpSelectOjbect').on('change', function(event){
+               var _thisOption_ = jqry(this).val();
+               if (_thisOption_.match('all')){
+                 jqry('#srcIp').attr('disabled','disabled').val('all').css('color','grey');
+               }else if(_thisOption_.match('0.0.0.0/0')){
+                 jqry('#srcIp').attr('disabled','disabled').val('0.0.0.0/0').css('color','grey');
+               }else{
+                 jqry('#srcIp').removeAttr('disabled').val('10.10.10.1/32').css('color','grey');
+               };               
+               event.preventDefault()
+               event.stopPropagation()
+               return false
+            });
+            //
+            jqry('#dstIpSelectOjbect').on('change', function(event){
+               var _thisOption_ = jqry(this).val();
+               if (_thisOption_.match('all')){
+                 jqry('#dstIp').attr('disabled','disabled').val('all').css('color','grey');
+               }else if(_thisOption_.match('0.0.0.0/0')){
+                 jqry('#dstIp').attr('disabled','disabled').val('0.0.0.0/0').css('color','grey');
+               }else{
+                 jqry('#dstIp').removeAttr('disabled').val('20.20.20.1/32').css('color','grey');
+               };
+               event.preventDefault()
+               event.stopPropagation()
+               return false
+            });
+            //
+            var ip_pattern = new RegExp("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$");
+            var port_pattern = new RegExp("^[0-9]+$");
+            jqry('#searchButton').on('click', function(event){
+               jqry('#_searchInputValidation_div_').remove();
+               //
+               var _thisSrcIp_ = jqry('#srcIp').val();
+               if (! _thisSrcIp_.match('all')){
+                 if (! ip_pattern.test(_thisSrcIp_)){
+                   var _searchInputValidation_div_ = jqry('<div>').attr('id','_searchInputValidation_div_').attr('align','center').html('wrong source address').css('color','red').css('font-size','13');
+                   jqry(document.body).append(_searchInputValidation_div_);  
+                   event.preventDefault()
+                   event.stopPropagation()
+                   return false
+                 }
+               }
+               //
+               var _thisDstIp_ = jqry('#dstIp').val();
+               if (! _thisDstIp_.match('all')){
+                 if (! ip_pattern.test(_thisDstIp_)){
+                   var _searchInputValidation_div_ = jqry('<div>').attr('id','_searchInputValidation_div_').attr('align','center').html('wrong destination address').css('color','red').css('font-size','13');
+                   jqry(document.body).append(_searchInputValidation_div_);  
+                   event.preventDefault()
+                   event.stopPropagation()
+                   return false
+                 }
+               }
+               //
+               var _thisProtocal_ = jqry('#protocolSelectObject > option:selected').val();
+               if (_thisProtocal_.match('select')){
+                 var _searchInputValidation_div_ = jqry('<div>').attr('id','_searchInputValidation_div_').attr('align','center').html('choose protocol').css('color','red').css('font-size','13');
+                 jqry(document.body).append(_searchInputValidation_div_);  
+                 event.preventDefault()
+                 event.stopPropagation()
+                 return false
+               }
+               //
+               var _thisDstPort_ = jqry('#dstPort').val();
+               if (! _thisDstPort_.match('disabled')){
+                 if (! port_pattern.test(_thisDstPort_)){
+                   var _searchInputValidation_div_ = jqry('<div>').attr('id','_searchInputValidation_div_').attr('align','center').html('wrong application number').css('color','red').css('font-size','13');
+                   jqry(document.body).append(_searchInputValidation_div_);  
+                   event.preventDefault()
+                   event.stopPropagation()
+                   return false
+                 }
+               }
+               // 
+               var _thisAction_ = jqry('#actionSelectObject > option:selected').val();
+               //
+               jqry.ajax({
+                  type:"POST",
+                  url:ajax_api_server.concat('juniper/searchpolicy/'),
+                  data:JSON.stringify({
+                      items:[{
+                           srcIp:_thisSrcIp_,
+                           dstIp:_thisDstIp_,
+                           appProtocol:_thisProtocal_,
+                           srcPort:'all',
+                           dstPort:_thisDstPort_,
+                           action:_thisAction_
+                      }]
+                  }),
+                  success:function(data){
+                      var _getFrom_ajax_ = JSON.parse(data);
+                      console.log(_getFrom_ajax_);
+                  }
+               });
+               //
+               event.preventDefault()
+               event.stopPropagation()
+               return false
+            });
+         };
+         userSearchMenu();
          event.preventDefault()
          event.stopPropagation()
          return false
