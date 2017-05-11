@@ -27,6 +27,13 @@
       jqry('#_devicesInfoUpdate_subMenu_div_').remove();
       jqry('#_deviceUpdated_infoView_div_').remove();
       jqry('#_deviceUpdated_infoView_table_').remove();
+      jqry('#_exportRoutingButton_div_').remove();
+      jqry('#_showRouting_div_').remove();
+      jqry('#_manualUpdateRouting_div_').remove();
+      jqry('#_exportConfiguration_ButtonDiv_').remove();
+      jqry('#_cachingPolicyButton_div_').remove();
+      jqry('#_listingPolicySelect_div_').remove();
+      jqry('#_policyTable_div_').remove();
     };
 
     function _addLine_forText_(_menu_table_, text_strings){
@@ -152,7 +159,7 @@
          // add line
          img_filenames = new Array('img/register_image.png', 'img/group_image.png', 'img/firewallUpdate.png', 'img/book_image.jpeg', 'img/list_image.jpeg', 'img/search_image.png');
          _addLine_forImg_(_menu_table_, img_filenames);
-         text_strings = new Array('devices register<br>for admin', 'grouping<br>devices', 'registered devices<br>update', 'routing update<br>for admin', 'policies<br>for admin', 'search<br>for users');
+         text_strings = new Array('firewall register<br>for admin', 'clustring firewall<br>for admin', 'devices status<br>update', 'routing update<br>for admin', 'policies<br>for admin', 'search<br>for users');
          _addLine_forText_(_menu_table_, text_strings);
          jqry(_menu_div_).append(_menu_table_);
          jqry(document.body).append(_menu_div_);
@@ -455,6 +462,11 @@
                             if (_thisObj_value_.match(element.hostname)){
                               _tableTrObj_ = jqry('<tr>');
                               _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.hostname).css('color','grey'));
+                              if (element.failover.match('^primary$')){
+                                _tableTrObj_.append(jqry('<th>').css('font-size','12').html(element.failover).css('color','black'));
+                              }else{
+                                _tableTrObj_.append(jqry('<th>').css('font-size','12').html(element.failover).css('color','grey')); 
+                              };
                               _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.from_zone).css('color','green'));
                               _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.to_zone).css('color','green')); 
                               var _button_value_string_ = String(element.hostname) + String('#') + String(element.from_zone) + String('#') + String(element.to_zone);
@@ -482,7 +494,6 @@
               //
               jqry('#_deviceUpdated_infoView_div_').on('click', 'button', function(event){
                  var _thisSelected_value_ = jqry('#_deviceUpdated_infoView_select_ > option:selected')[0].value;
-                 console.log(_thisSelected_value_);
                  var _thisObj_value_ = jqry(this).val();
                  var _thisObj_array_ = _thisObj_value_.split('#');
                  jqry.ajax({
@@ -535,6 +546,313 @@
          event.stopPropagation()
          return false
       });
+
+      ////////////////////////////////// register button click ///////////////////////////////////////
+      jqry('#book_image').on('click',function(event){
+         remove_divAll();
+         function _showRoutingInfo_(_showRouting_div_){
+            jqry('#_showRoutingSelect_').remove();
+            jqry('#_showRoutingTable_').remove();
+            jqry('#_updateRoutingTable_table_').remove();
+            jqry('#_ajax_return_result_div_').remove();
+            jqry.ajax({
+               type:"GET",
+               url:ajax_api_server.concat('juniper/showroute/'),
+               success:function(data){
+                   var _getFrom_ajax_ = JSON.parse(data);
+                   var _getFrom_ajax_items_ = _getFrom_ajax_.items;
+                   if (_getFrom_ajax_items_.length){
+                     var _showRoutingSelect_ = jqry('<select>').css('margin','auto').attr('id','_showRoutingSelect_');
+                     jqry.each(_getFrom_ajax_items_, function(index, element){
+                        _showRoutingSelect_.append(jqry('<option>').attr('value',element).html(element)); 
+                     });
+                     _showRouting_div_.append(_showRoutingSelect_);
+                   };
+               }
+            });
+         };
+         function _showRoutingInfo_ByHost_(_showRouting_div_, _manualUpdateRouting_div_){
+            jqry('#_showRoutingTable_').remove();
+            jqry('#_updateRoutingTable_table_').remove();
+            jqry('#_ajax_return_result_div_').remove();
+            var _selectedHostName_ = jqry('#_showRoutingSelect_ > option:selected')[0].value;
+            jqry.ajax({
+               type:"POST",
+               url:ajax_api_server.concat('juniper/showroute/staticupdate/'),
+               data:JSON.stringify({
+                   items:[{
+                      hostname:_selectedHostName_
+                   }],
+                   auth_key:jqry('#_auth_password_').val()
+               }),
+               success:function(data){
+                   var _getFrom_ajax_ = JSON.parse(data);
+                   var _getFrom_ajax_array_= _getFrom_ajax_.items;
+                   if (_getFrom_ajax_array_.length){
+                     var _showRoutingTable_ = jqry('<table>').css('margin','auto').attr('id','_showRoutingTable_');
+                     _showRouting_div_.append(_showRoutingTable_);
+                     jqry.each(_getFrom_ajax_array_, function(index, element){
+                        _tableTrObj_ = jqry('<tr>');
+                        _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.routing_address).css('color','grey'));
+                        _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.zonename).css('color','grey'));
+                        if (! element.update_method.match('^auto$')){
+                          var _buttonValue_array_ = new Array(_selectedHostName_, element.routing_address, element.zonename);
+                          var _buttonValue_ = _buttonValue_array_.join('#');
+                          _tableTrObj_.append(jqry('<th>').append(jqry('<button>').html('remove').css('font-size','9').css('color','red').attr('value',_buttonValue_)));
+                        }else{
+                          _tableTrObj_.append(jqry('<th>').css('font-size','11').html(element.update_method).css('color','grey'));
+                        };
+                        _showRoutingTable_.append(_tableTrObj_); 
+                     });
+                   };
+                   var _getFrom_ajax_zonesName_= _getFrom_ajax_.zonesName;
+                   if (_getFrom_ajax_zonesName_.length){
+                     var _updateRoutingTable_table_ = jqry('<table>').css('margin','auto').attr('id','_updateRoutingTable_table_');
+                     _manualUpdateRouting_div_.append(_updateRoutingTable_table_);
+                     _tableTrObj_ = jqry('<tr>');
+                     _tableTrObj_.append(jqry('<th>').append(jqry('<textarea>').attr('cols','80').attr('rows','4').attr('id','_input_address_').val('(Example) 0.0.0.0/0;192.168.10.0/24;').css('color','grey')));
+                     var _updateRoutingSelect_ = jqry('<select>').css('margin','auto').attr('id','_updateRoutingSelect_');
+                     jqry.each(_getFrom_ajax_zonesName_, function(index, element){
+                        _updateRoutingSelect_.append(jqry('<option>').attr('value',element).html(element)); 
+                     });
+                     _tableTrObj_.append(jqry('<th>').append(_updateRoutingSelect_));
+                     _tableTrObj_.append(jqry('<th>').append(jqry('<button>').attr('id','_routing_updateButton_').css('font-size','12').html('static insert')));
+                     _updateRoutingTable_table_.append(_tableTrObj_);
+                   };
+               }
+            });
+         };
+         function routingUpdate_subMenu(){
+            var _exportRoutingButton_div_ = jqry('<div>').attr('id','_exportRoutingButton_div_').attr('align','center');
+            _exportRoutingButton_div_.append(jqry('<button>').attr('id','_exportRoutingButton_').html('routing table update').css('font-size','12').css('color','green'));
+            jqry(document.body).append(_exportRoutingButton_div_);
+            //
+            var _showRouting_div_ = jqry('<div>').attr('id','_showRouting_div_').attr('align','center');
+            jqry(document.body).append(_showRouting_div_);
+            //
+            var _manualUpdateRouting_div_ = jqry('<div>').attr('id','_manualUpdateRouting_div_').attr('align','center');
+            jqry(document.body).append(_manualUpdateRouting_div_);
+            //
+            jqry('#_manualUpdateRouting_div_').on('click', 'button', function(event){
+               jqry('#_ajax_return_result_div_').remove();
+               var _inputFromTextarea_ = jqry('#_input_address_').val();
+               var _inputFromTextarea_array_ = _inputFromTextarea_.split(';');
+               //
+               var ip_pattern = new RegExp("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+$");
+               var _inputStatus_ = 1;
+               var _validInput_ = new Array();
+               jqry.each(_inputFromTextarea_array_, function(index, element){
+                  var _netvalue_input_ = element.trim();
+                  if (_netvalue_input_.length){
+                    if (ip_pattern.test(_netvalue_input_)){
+                      _validInput_.push(_netvalue_input_);
+                    }
+                    else{
+                      _inputStatus_ = 0;
+                    }
+                  }
+               });
+               if (_inputStatus_){
+                 jqry.ajax({
+                    type:"PUT",
+                    url:ajax_api_server.concat('juniper/showroute/staticupdate/'),
+                    data:JSON.stringify({
+                        items:[{
+                           hostname:jqry('#_showRoutingSelect_ > option:selected')[0].value,
+                           zonename:jqry('#_updateRoutingSelect_ > option:selected')[0].value,
+                           routing_address:_validInput_
+                        }],
+                        auth_key:jqry('#_auth_password_').val()
+                    }),
+                    success:function(data){
+                        _showRoutingInfo_ByHost_(_showRouting_div_, _manualUpdateRouting_div_);
+                        _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                    } 
+                 }); 
+               }else{
+                 jqry(document.body).append(jqry('<div>').attr('align','center').attr('id','_ajax_return_result_div_').html('input values have wrong format!').css('color','red').css('font-size','11'));
+               };
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            //
+            jqry('#_showRouting_div_').on('click', 'button', function(event){
+               var _removeItem_string_ = jqry(this).val();
+               var _removeItem_ = _removeItem_string_.split('#');
+               jqry.ajax({
+                  type:"DELETE",
+                  url:ajax_api_server.concat('juniper/showroute/staticupdate/'),
+                  data:JSON.stringify({
+                      items:[{
+                           hostname:_removeItem_[0],
+                           zonename:_removeItem_[2],
+                           routing_address:_removeItem_[1]
+                      }],
+                      auth_key:jqry('#_auth_password_').val()
+                  }),
+                  success:function(data){
+                      _showRoutingInfo_ByHost_(_showRouting_div_, _manualUpdateRouting_div_);
+                      _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_'); 
+                  }
+               });
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            jqry('#_showRouting_div_').on('change', 'select', function(event){
+               _showRoutingInfo_ByHost_(_showRouting_div_, _manualUpdateRouting_div_);
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            //
+            jqry('#_exportRoutingButton_').on('click', function(event){
+               jqry.ajax({
+                  type:"POST",
+                  url:ajax_api_server.concat('juniper/showroute/'),
+                  data:JSON.stringify({
+                      auth_key:jqry('#_auth_password_').val()
+                  }),
+                  success:function(data){
+                      _showRoutingInfo_(_showRouting_div_);
+                      _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                  } 
+               });
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            _showRoutingInfo_(_showRouting_div_);
+         }; 
+         _login_auth_start_(routingUpdate_subMenu);
+         event.preventDefault()
+         event.stopPropagation()
+         return false
+      });
+ 
+      ////////////////////////////////// register button click ///////////////////////////////////////
+      jqry('#list_image').on('click',function(event){
+         remove_divAll();
+         function policyExportingCaching_menu(){
+            var _exportConfiguration_ButtonDiv_ = jqry('<div>').attr('id','_exportConfiguration_ButtonDiv_').attr('align','center');
+            _exportConfiguration_ButtonDiv_.append(jqry('<button>').attr('id','_exportConfiguration_').html('export configurations').css('font-size','12').css('color','green'));
+            jqry(document.body).append(_exportConfiguration_ButtonDiv_);
+            //
+            jqry('#_exportConfiguration_').on('click', function(event){
+               jqry('#_ajax_return_result_div_').remove();
+               jqry.ajax({
+                  type:"POST",
+                  url:ajax_api_server.concat('juniper/exportpolicy/'),
+                  data:JSON.stringify({ auth_key:jqry('#_auth_password_').val() }),
+                  success:function(data){
+                       _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                  }
+               });
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            // 
+            var _cachingPolicyButton_div_ = jqry('<div>').attr('id','_cachingPolicyButton_div_').attr('align','center');
+            _cachingPolicyButton_div_.append(jqry('<button>').attr('id','_cachingPolicyButton_').html('cache security policies').css('font-size','12').css('color','green'));
+            jqry(document.body).append(_cachingPolicyButton_div_);
+            //
+            jqry('#_cachingPolicyButton_').on('click', function(event){
+               jqry('#_ajax_return_result_div_').remove();
+               jqry.ajax({
+                  type:"POST",
+                  url:ajax_api_server.concat('juniper/cachingpolicy/'),
+                  data:JSON.stringify({ auth_key:jqry('#_auth_password_').val() }),
+                  success:function(data){
+                       _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
+                  }
+               });
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            //
+            var _listingPolicySelect_div_ = jqry('<div>').attr('id','_listingPolicySelect_div_').attr('align','center');
+            jqry(document.body).append(_listingPolicySelect_div_);
+            jqry('#_listingPolicySelect_').remove();
+            jqry.ajax({
+               type:"GET",
+               url:ajax_api_server.concat('juniper/showrulebyrequest/'),
+               success:function(data){
+                   var _getFrom_ajax_ = JSON.parse(data);
+                   var _getFrom_ajax_items_ = _getFrom_ajax_.items;
+                   if (_getFrom_ajax_items_.length){
+                     var _listingPolicySelect_ = jqry('<select>').attr('id','_listingPolicySelect_').css('margin','auto');
+                     _listingPolicySelect_div_.append(_listingPolicySelect_);
+                     jqry.each(_getFrom_ajax_items_, function(index, element){
+                          var _elementArray_ = new Array(element.hostname, element.from_zone, element.to_zone);
+                          var _optionValueString_ = _elementArray_.join(' ');
+                          _listingPolicySelect_.append(jqry('<option>').attr('value',_optionValueString_).html(_optionValueString_).css('font-size','8'));
+                     });
+                   }
+               }
+            });
+            //
+            jqry('#_listingPolicySelect_div_').on('change', 'select', function(event){
+               jqry('#_policyTable_div_').remove();
+               var _optionValueString_ = jqry('#_listingPolicySelect_ > option:selected').val();
+               var _elementArray_ = _optionValueString_.split(' ');
+               jqry.ajax({
+                  type:"POST",
+                  url:ajax_api_server.concat('juniper/showrulebyrequest/'),
+                  data:JSON.stringify({
+                      items:[{
+                           hostname:_elementArray_[0],
+                           from_zone:_elementArray_[1],
+                           to_zone:_elementArray_[2]
+                      }]
+                  }),
+                  success:function(data){
+                      var _getFrom_ajax_ = JSON.parse(data);
+                      var _getFrom_ajax_items_ = _getFrom_ajax_.items;
+                      if (_getFrom_ajax_items_.length){
+                        var _policyTable_div_ = jqry('<div>').attr('id','_policyTable_div_').attr('align','center'); 
+                        jqry(document.body).append(_policyTable_div_);
+                        //
+                        var _policyTable_ = jqry('<table>').css('margin','auto').attr('id','_policyTable_');
+                        _policyTable_div_.append(_policyTable_);
+                        //
+                        jqry.each(_getFrom_ajax_items_, function(index, element){
+                            var text_strings = new Array(
+                                element.hostname,
+                                element.from_zone,
+                                element.to_zone,
+                                element.policyname,
+                                element.sequence_number,
+                                element.srcIp.join('<br>'),
+                                element.srcPort.join('<br>'),
+                                element.dstIp.join('<br>'),
+                                element.dstPort.join('<br>'),
+                                element.action
+                            );
+                            _addLine_forText_(_policyTable_, text_strings); 
+                        });
+
+
+
+
+                      }
+                  }
+               }); 
+               event.preventDefault();
+               event.stopPropagation();
+               return false
+            });
+            // 
+            // 
+         };
+         _login_auth_start_(policyExportingCaching_menu);
+         event.preventDefault()
+         event.stopPropagation()
+         return false
+      });
+      
 
     });
     
