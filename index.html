@@ -757,10 +757,42 @@
                event.stopPropagation();
                return false
             });
+            //
+            function _showCached_devices_(_listingPolicySelect_div_){
+               jqry('#_listPolicySelectTable_').remove();
+               jqry.ajax({
+                  type:"GET",
+                  url:ajax_api_server.concat('juniper/showrulebyrequest/'),
+                  success:function(data){
+                      var _getFrom_ajax_ = JSON.parse(data);
+                      var _getFrom_ajax_items_ = _getFrom_ajax_.items;
+                      if (_getFrom_ajax_items_.length){
+                        var _listPolicySelectTable_ = jqry('<table>').css('margin','auto').attr('id','_listPolicySelectTable_');
+                        _listingPolicySelect_div_.append(_listPolicySelectTable_);
+                        var _tabletr_ = jqry('<tr>');
+                        _listPolicySelectTable_.append(_tabletr_);
+                        var _tableth_1_ = jqry('<th>');
+                        _tabletr_.append(_tableth_1_);
+                        var _listingPolicySelect_ = jqry('<select>').attr('id','_listingPolicySelect_').css('margin','auto');
+                        _tableth_1_.append(_listingPolicySelect_);
+                        jqry.each(_getFrom_ajax_items_, function(index, element){
+                             var _elementArray_ = new Array(element.hostname, element.from_zone, element.to_zone);
+                             var _optionValueString_ = _elementArray_.join(' ');
+                             _listingPolicySelect_.append(jqry('<option>').attr('value',_optionValueString_).html(_optionValueString_).css('font-size','8'));
+                        });
+                        var _tableth_2_ = jqry('<th>').html('deivce only').css('font-size','13').css('color','grey');
+                        _tabletr_.append(_tableth_2_);
+                        _tableth_2_.append(jqry('<input>').attr('type','checkbox').attr('id','PolicySelectCheckbox').attr('value','deviceonly'));
+                      }
+                  }
+               });
+            }; 
             // 
             var _cachingPolicyButton_div_ = jqry('<div>').attr('id','_cachingPolicyButton_div_').attr('align','center');
             _cachingPolicyButton_div_.append(jqry('<button>').attr('id','_cachingPolicyButton_').html('cache security policies').css('font-size','12').css('color','green'));
             jqry(document.body).append(_cachingPolicyButton_div_);
+            var _listingPolicySelect_div_ = jqry('<div>').attr('id','_listingPolicySelect_div_').attr('align','center');
+            jqry(document.body).append(_listingPolicySelect_div_);
             //
             jqry('#_cachingPolicyButton_').on('click', function(event){
                jqry('#_ajax_return_result_div_').remove();
@@ -772,40 +804,42 @@
                        _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
                   }
                });
+               _showCached_devices_(_listingPolicySelect_div_)
                event.preventDefault();
                event.stopPropagation();
                return false
             });
             //
-            var _listingPolicySelect_div_ = jqry('<div>').attr('id','_listingPolicySelect_div_').attr('align','center');
-            jqry(document.body).append(_listingPolicySelect_div_);
-            jqry('#_listPolicySelectTable_').remove();
-            jqry.ajax({
-               type:"GET",
-               url:ajax_api_server.concat('juniper/showrulebyrequest/'),
-               success:function(data){
-                   var _getFrom_ajax_ = JSON.parse(data);
-                   var _getFrom_ajax_items_ = _getFrom_ajax_.items;
-                   if (_getFrom_ajax_items_.length){
-                     var _listPolicySelectTable_ = jqry('<table>').css('margin','auto').attr('id','_listPolicySelectTable_');
-                     _listingPolicySelect_div_.append(_listPolicySelectTable_);
-                     var _tabletr_ = jqry('<tr>');
-                     _listPolicySelectTable_.append(_tabletr_);
-                     var _tableth_1_ = jqry('<th>');
-                     _tabletr_.append(_tableth_1_);
-                     var _listingPolicySelect_ = jqry('<select>').attr('id','_listingPolicySelect_').css('margin','auto');
-                     _tableth_1_.append(_listingPolicySelect_);
-                     jqry.each(_getFrom_ajax_items_, function(index, element){
-                          var _elementArray_ = new Array(element.hostname, element.from_zone, element.to_zone);
-                          var _optionValueString_ = _elementArray_.join(' ');
-                          _listingPolicySelect_.append(jqry('<option>').attr('value',_optionValueString_).html(_optionValueString_).css('font-size','8'));
-                     });
-                     var _tableth_2_ = jqry('<th>').html('deivce only').css('font-size','13').css('color','grey');
-                     _tabletr_.append(_tableth_2_);
-                     _tableth_2_.append(jqry('<input>').attr('type','checkbox').attr('id','PolicySelectCheckbox').attr('value','deviceonly'));
-                   }
-               }
-            });
+            //var _listingPolicySelect_div_ = jqry('<div>').attr('id','_listingPolicySelect_div_').attr('align','center');
+            //jqry(document.body).append(_listingPolicySelect_div_);
+            _showCached_devices_(_listingPolicySelect_div_);
+            //jqry('#_listPolicySelectTable_').remove();
+            //jqry.ajax({
+            //   type:"GET",
+            //   url:ajax_api_server.concat('juniper/showrulebyrequest/'),
+            //   success:function(data){
+            //       var _getFrom_ajax_ = JSON.parse(data);
+            //       var _getFrom_ajax_items_ = _getFrom_ajax_.items;
+            //       if (_getFrom_ajax_items_.length){
+            //         var _listPolicySelectTable_ = jqry('<table>').css('margin','auto').attr('id','_listPolicySelectTable_');
+            //         _listingPolicySelect_div_.append(_listPolicySelectTable_);
+            //         var _tabletr_ = jqry('<tr>');
+            //         _listPolicySelectTable_.append(_tabletr_);
+            //         var _tableth_1_ = jqry('<th>');
+            //         _tabletr_.append(_tableth_1_);
+            //         var _listingPolicySelect_ = jqry('<select>').attr('id','_listingPolicySelect_').css('margin','auto');
+            //         _tableth_1_.append(_listingPolicySelect_);
+            //         jqry.each(_getFrom_ajax_items_, function(index, element){
+            //              var _elementArray_ = new Array(element.hostname, element.from_zone, element.to_zone);
+            //              var _optionValueString_ = _elementArray_.join(' ');
+            //              _listingPolicySelect_.append(jqry('<option>').attr('value',_optionValueString_).html(_optionValueString_).css('font-size','8'));
+            //         });
+            //         var _tableth_2_ = jqry('<th>').html('deivce only').css('font-size','13').css('color','grey');
+            //         _tabletr_.append(_tableth_2_);
+            //         _tableth_2_.append(jqry('<input>').attr('type','checkbox').attr('id','PolicySelectCheckbox').attr('value','deviceonly'));
+            //       }
+            //   }
+            //});
             //
             jqry('#_listingPolicySelect_div_').on('change', 'select', function(event){
                jqry('#_ajax_return_result_div_').remove();
