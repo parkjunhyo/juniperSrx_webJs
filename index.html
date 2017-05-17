@@ -803,10 +803,10 @@
                   url:ajax_api_server.concat('juniper/cachingpolicy/'),
                   data:JSON.stringify({ auth_key:jqry('#_auth_password_').val() }),
                   success:function(data){
+                       _showCached_devices_(_listingPolicySelect_div_)
                        _ajaxSuccess_multiLine_printing_(data, '_ajax_return_result_div_');
                   }
                });
-               _showCached_devices_(_listingPolicySelect_div_)
                event.preventDefault();
                event.stopPropagation();
                return false
