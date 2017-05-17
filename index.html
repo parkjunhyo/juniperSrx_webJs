@@ -32,10 +32,12 @@
       jqry('#_manualUpdateRouting_div_').remove();
       jqry('#_exportConfiguration_ButtonDiv_').remove();
       jqry('#_cachingPolicyButton_div_').remove();
-      jqry('#_listingPolicySelect_div_').remove();
+      jqry('#_listPolicySelectTable_').remove();
       jqry('#_policyTable_div_').remove();
       jqry('#_userSearchMenu_div_').remove();
       jqry('#_searchInputValidation_div_').remove();
+      jqry('#_matchstatusOverview_div_').remove();
+      jqry('#_matchpolicytable_div_').remove();
     };
 
     function _addLine_forText_(_menu_table_, text_strings){
@@ -777,7 +779,7 @@
             //
             var _listingPolicySelect_div_ = jqry('<div>').attr('id','_listingPolicySelect_div_').attr('align','center');
             jqry(document.body).append(_listingPolicySelect_div_);
-            jqry('#_listingPolicySelect_').remove();
+            jqry('#_listPolicySelectTable_').remove();
             jqry.ajax({
                type:"GET",
                url:ajax_api_server.concat('juniper/showrulebyrequest/'),
@@ -785,21 +787,39 @@
                    var _getFrom_ajax_ = JSON.parse(data);
                    var _getFrom_ajax_items_ = _getFrom_ajax_.items;
                    if (_getFrom_ajax_items_.length){
+                     var _listPolicySelectTable_ = jqry('<table>').css('margin','auto').attr('id','_listPolicySelectTable_');
+                     _listingPolicySelect_div_.append(_listPolicySelectTable_);
+                     var _tabletr_ = jqry('<tr>');
+                     _listPolicySelectTable_.append(_tabletr_);
+                     var _tableth_1_ = jqry('<th>');
+                     _tabletr_.append(_tableth_1_);
                      var _listingPolicySelect_ = jqry('<select>').attr('id','_listingPolicySelect_').css('margin','auto');
-                     _listingPolicySelect_div_.append(_listingPolicySelect_);
+                     _tableth_1_.append(_listingPolicySelect_);
                      jqry.each(_getFrom_ajax_items_, function(index, element){
                           var _elementArray_ = new Array(element.hostname, element.from_zone, element.to_zone);
                           var _optionValueString_ = _elementArray_.join(' ');
                           _listingPolicySelect_.append(jqry('<option>').attr('value',_optionValueString_).html(_optionValueString_).css('font-size','8'));
                      });
+                     var _tableth_2_ = jqry('<th>').html('deivce only').css('font-size','13').css('color','grey');
+                     _tabletr_.append(_tableth_2_);
+                     _tableth_2_.append(jqry('<input>').attr('type','checkbox').attr('id','PolicySelectCheckbox').attr('value','deviceonly'));
                    }
                }
             });
             //
             jqry('#_listingPolicySelect_div_').on('change', 'select', function(event){
+               jqry('#_ajax_return_result_div_').remove();
                jqry('#_policyTable_div_').remove();
                var _optionValueString_ = jqry('#_listingPolicySelect_ > option:selected').val();
                var _elementArray_ = _optionValueString_.split(' ');
+
+               var _checkboxString_ = jqry('#PolicySelectCheckbox:checked').val();
+               if (_checkboxString_){
+                 _optionvalue_ = _checkboxString_;
+               }else{
+                 _optionvalue_ = 'no option';
+               }
+
                jqry.ajax({
                   type:"POST",
                   url:ajax_api_server.concat('juniper/showrulebyrequest/'),
@@ -807,7 +827,8 @@
                       items:[{
                            hostname:_elementArray_[0],
                            from_zone:_elementArray_[1],
-                           to_zone:_elementArray_[2]
+                           to_zone:_elementArray_[2],
+                           option:_optionvalue_
                       }]
                   }),
                   success:function(data){
@@ -884,7 +905,8 @@
             //
             var protocolSelectObject = jqry('<select>').attr('id','protocolSelectObject');
             protocolSelectObject.append(jqry('<option>').attr('value','select').html('select'));
-            protocolSelectObject.append(jqry('<option>').attr('value','all').html('all'));
+            protocolSelectObject.append(jqry('<option>').attr('value','all').html('all service'));
+            protocolSelectObject.append(jqry('<option>').attr('value','0').html('any service'));
             protocolSelectObject.append(jqry('<option>').attr('value','tcp').html('tcp'));
             protocolSelectObject.append(jqry('<option>').attr('value','udp').html('udp'));
             protocolSelectObject.append(jqry('<option>').attr('value','icmp').html('icmp'));
@@ -902,8 +924,14 @@
             //
             jqry('#protocolSelectObject').on('change', function(event){
                var _thisProtocol_ = jqry(this).val();
-               if(_thisProtocol_.match('all') || _thisProtocol_.match('icmp')){
+               if(_thisProtocol_.match('all')){
+                 jqry('#dstPort').attr('disabled','disabled').val('all').css('color','grey');
+               }else if(_thisProtocol_.match('icmp')){
                  jqry('#dstPort').attr('disabled','disabled').val('disabled').css('color','grey');
+               }else if(_thisProtocol_.match('0')){
+                 jqry('#dstPort').attr('disabled','disabled').val('0-65535').css('color','grey');
+               }else if(_thisProtocol_.match('select')){
+                 jqry('#dstPort').attr('disabled','disabled').val('select').css('color','grey');
                }else{
                  jqry('#dstPort').removeAttr('disabled').val('80, number only').css('color','grey');
                }
@@ -977,7 +1005,7 @@
                }
                //
                var _thisDstPort_ = jqry('#dstPort').val();
-               if (! _thisDstPort_.match('disabled')){
+               if (! (_thisDstPort_.match('all') || _thisDstPort_.match('disabled') || _thisDstPort_.match('0-65535') || _thisDstPort_.match('select'))){
                  if (! port_pattern.test(_thisDstPort_)){
                    var _searchInputValidation_div_ = jqry('<div>').attr('id','_searchInputValidation_div_').attr('align','center').html('wrong application number').css('color','red').css('font-size','13');
                    jqry(document.body).append(_searchInputValidation_div_);  
@@ -986,9 +1014,20 @@
                    return false
                  }
                }
+               //
+               if (_thisSrcIp_.match('all') && _thisDstIp_.match('all')){
+                 var _searchInputValidation_div_ = jqry('<div>').attr('id','_searchInputValidation_div_').attr('align','center').html('one of address should be not "all" value').css('color','red').css('font-size','13');
+                 jqry(document.body).append(_searchInputValidation_div_);
+                 event.preventDefault()
+                 event.stopPropagation()
+                 return false
+               };
                // 
                var _thisAction_ = jqry('#actionSelectObject > option:selected').val();
                //
+               jqry('#_matchstatusOverview_div_').remove();
+               jqry('#_matchpolicytable_div_').remove();
+               jqry('#_ajax_return_result_div_').remove();
                jqry.ajax({
                   type:"POST",
                   url:ajax_api_server.concat('juniper/searchpolicy/'),
@@ -1004,7 +1043,95 @@
                   }),
                   success:function(data){
                       var _getFrom_ajax_ = JSON.parse(data);
-                      console.log(_getFrom_ajax_);
+                      var _getFrom_ajax_items_ = _getFrom_ajax_.items;
+                      if (_getFrom_ajax_items_.length){
+                        var _matchstatusOverview_div_ = jqry('<div>').attr('id','_matchstatusOverview_div_').attr('align','center');
+                        jqry(document.body).append(_matchstatusOverview_div_);
+                        var _matchstatusOverview_table_ = jqry('<table>').attr('border','1').css('margin','auto').attr('id','_matchstatusOverview_table_'); 
+                        _matchstatusOverview_div_.append(_matchstatusOverview_table_);
+                        jqry.each(_getFrom_ajax_items_, function(index, element){
+                           var _tabletr_ = jqry('<tr>');
+                           _matchstatusOverview_table_.append(_tabletr_);
+                           _tabletr_.append(jqry('<th>').html(element.hostname).css('font-size','11').css('color','grey'));
+                           _tabletr_.append(jqry('<th>').html(element.from_zone).css('font-size','11').css('color','grey'));
+                           _tabletr_.append(jqry('<th>').html(element.to_zone).css('font-size','11').css('color','grey'));
+                           if (element.matchstatus){
+                             _tabletr_.append(jqry('<th>').html('opened').css('color','green').css('font-size','12'));
+                           }else{
+                             _tabletr_.append(jqry('<th>').html('not opened').css('color','red').css('font-size','12'));
+                           };
+                        });
+                        //
+                        var _matchpolicytable_div_ = jqry('<div>').attr('id','_matchpolicytable_div_').attr('align','center');
+                        jqry(document.body).append(_matchpolicytable_div_);
+                        jqry.each(_getFrom_ajax_items_, function(index, element){
+                           var _thisTableName_ = element.hostname + ' ' + element.from_zone + ' ' + element.to_zone;
+                           if (element.perfectrules.length || element.includerules.length || element.partialrules.length){
+                             _matchpolicytable_div_.append(jqry('<div>').attr('align','center').html(_thisTableName_).css('font-size','13').css('color','blue'));
+                             var _eachruletable_ = jqry('<table>').css('margin','auto').attr('id','_eachruletable_');
+                             _matchpolicytable_div_.append(_eachruletable_);
+                             if (element.perfectrules.length){
+                               var _rulesArray_ = element.perfectrules;
+                               jqry.each(_rulesArray_, function(_id_, _ele_){
+                                   var _itText_ = new Array(
+                                      _ele_.hostname,
+                                      _ele_.from_zone,
+                                      _ele_.to_zone,
+                                      'perfectmatch',
+                                      _ele_.policyname,
+                                      _ele_.sequence_number,
+                                      _ele_.srcIp.join('<br>'),
+                                      _ele_.srcPort.join('<br>'),
+                                      _ele_.dstIp.join('<br>'),
+                                      _ele_.dstPort.join('<br>'),
+                                      _ele_.action
+                                   );
+                                   _addLine_forText_(_eachruletable_, _itText_);
+                               });
+                             }
+                             if (element.includerules.length){
+                               var _rulesArray_ = element.includerules;
+                               jqry.each(_rulesArray_, function(_id_, _ele_){
+                                   var _itText_ = new Array(
+                                      _ele_.hostname,
+                                      _ele_.from_zone,
+                                      _ele_.to_zone,
+                                      'includematch',
+                                      _ele_.policyname,
+                                      _ele_.sequence_number,
+                                      _ele_.srcIp.join('<br>'),
+                                      _ele_.srcPort.join('<br>'),
+                                      _ele_.dstIp.join('<br>'),
+                                      _ele_.dstPort.join('<br>'),
+                                      _ele_.action
+                                   );
+                                   _addLine_forText_(_eachruletable_, _itText_);
+                               });
+                             }
+                             if (element.partialrules.length){
+                               var _rulesArray_ = element.partialrules;
+                               jqry.each(_rulesArray_, function(_id_, _ele_){
+                                   var _itText_ = new Array(
+                                      _ele_.hostname,
+                                      _ele_.from_zone,
+                                      _ele_.to_zone,
+                                      'partialmatch',
+                                      _ele_.policyname,
+                                      _ele_.sequence_number,
+                                      _ele_.srcIp.join('<br>'),
+                                      _ele_.srcPort.join('<br>'),
+                                      _ele_.dstIp.join('<br>'),
+                                      _ele_.dstPort.join('<br>'),
+                                      _ele_.action
+                                   );
+                                   _addLine_forText_(_eachruletable_, _itText_);
+                               });
+                             }
+                           }
+                        });
+                      }else{
+                        jqry(document.body).append(jqry('<div>').attr('align','center').attr('id','_ajax_return_result_div_').html('nothing searched!').css('color','red').css('font-size','11'));
+                      };
                   }
                });
                //
