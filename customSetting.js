@@ -5,4 +5,6 @@ var project_name = 'juniperSrx_webJs';
 // javascript source 
 var ajax_api_server = 'http://192.168.56.101:8080/';
 
+// login page timeout
+var localStorageTimeout = 1000 * 60 * 10;
 
